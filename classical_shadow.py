@@ -1,10 +1,15 @@
 import random
 from abc import ABC, abstractmethod
 
+import qiskit
+
 from backrotation import (
     n_qubit_clifford_backrotation,
     single_qubit_clifford_backrotation,
 )
+from random_clifford import get_random_nqbit_clifford, get_random_singlequbit_clifford
+
+# TODO: maybe refactor beacause when nqbit clifford are added
 
 
 class ClassicalShadow(ABC):
@@ -23,16 +28,19 @@ class ClassicalShadow(ABC):
     def add_snapshot(self):
         # get random rotation
         if self.single_qubit_clifford:
-            rotation_description = self.create_description_random_singlequbit_clifford()
+            rotation_description = get_random_singlequbit_clifford(self.num_qubits)
         else:
-            rotation_description = self.create_description_random_nqbit_clifford()
+            rotation_description = get_random_nqbit_clifford(self.num_qubits)
 
         state_generation_circuit = self.getStateCreationCircuit()
         combined_circuit = self.make_cirucit_that_ceates_rotated_state(
             rotation_description, state_generation_circuit
         )
-        measurement = self.run_cuircuit_and_get_measurment(combined_circuit)
-        snapshot = self.compute_snapshot(rotation_description, measurement)
+
+        # getting the measurement results for each qubit
+        measurement_results = self.run_cuircuit_and_get_measurment(combined_circuit)
+
+        snapshot = self.compute_snapshot(rotation_description, measurement_results)
         self.snapshots.append(snapshot)
 
     def predict_observable(self):
@@ -45,23 +53,14 @@ class ClassicalShadow(ABC):
         print("makes a circuit out of description")
         print("combining both circuits")
 
-    def create_description_random_nqbit_clifford(self):
-        # TODO: maybe there is something better than giving back a circuit as this is hard to back rotate
-        """returns random n-qubit clifford circuits in the size of num_qubits"""
-        raise NotImplementedError("This function is not yet implemented.")
-
-    def create_description_random_singlequbit_clifford(self):
-        # TODO: maybe later enum
-        # TODO: check if I H SH is correct
-        return [random.choice(["id", "h", "h,sdg"]) for i in range(self.num_qubits)]
-
     def compute_snapshot(self, rotation_description, measurement):
+        assert len(measurement) == self.num_qubits
         # measurement is a bitstring
         # rotation description is a list of single qubit clifford rotations
         if self.single_qubit_clifford:
-            single_qubit_clifford_backrotation(rotation_description, measurement)
+            return single_qubit_clifford_backrotation(rotation_description, measurement)
         else:
-            n_qubit_clifford_backrotation(rotation_description, measurement)
+            return n_qubit_clifford_backrotation(rotation_description, measurement)
 
     @abstractmethod
     def run_cuircuit_and_get_measurment(self, circuit):
