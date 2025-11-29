@@ -1,4 +1,5 @@
 import random
+from functools import reduce
 
 import numpy as np
 from qiskit import QuantumCircuit
@@ -21,6 +22,19 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
 
     def get_random_rotations(self, num_qubits) -> list[str]:
         return [random.choice(["Z", "H", "X"]) for i in range(num_qubits)]
+
+    def get_desity_matrix_from_snapshots(self):
+        if not self.snapshots:
+            raise ValueError("No snapshot prestent.")
+
+        first_snapshot_full = reduce(np.kron, self.snapshots[0])
+        sum_rho = np.zeros_like(first_snapshot_full, dtype=complex)
+
+        for snapshot_list in self.snapshots:
+            full_snapshot = reduce(np.kron, snapshot_list)
+            sum_rho += full_snapshot
+
+        return sum_rho / len(self.snapshots)
 
 
 # Backrotation

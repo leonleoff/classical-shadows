@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from qiskit import QuantumCircuit
+from qiskit.quantum_info import DensityMatrix
 
 from shadow_protocol import ShadowProtocol
 
@@ -14,11 +15,10 @@ class AbstractClassicalShadow(ABC):
 
         self.snapshots = []  # no type beacuse can be denstiy matrix or stabilzer
 
-    def get_desity_matrix_from_snapshots(self):
-        print("generating density matrix from snapshots")
-
-    def get_orginal_destiny_matrix(self):
-        print("getting original destiny matrix from state creation circuit")
+    def get_original_density_matrix(self):
+        circuit = self.shadow_protocol.get_state_circuit()
+        circuit.remove_final_measurements()
+        return DensityMatrix(circuit)
 
     def add_snapshot(self):
         rotations: list[str] = self.get_random_rotations(self.num_qubits)
@@ -55,4 +55,8 @@ class AbstractClassicalShadow(ABC):
 
     @abstractmethod
     def get_random_rotations(self, num_qubits) -> list[str]:
+        raise NotImplementedError("This method should be implemented by subclasses")
+
+    @abstractmethod
+    def get_desity_matrix_from_snapshots(self):
         raise NotImplementedError("This method should be implemented by subclasses")
