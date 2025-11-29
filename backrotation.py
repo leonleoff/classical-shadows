@@ -15,23 +15,23 @@ RHO_Y_PLUS = np.array([[0.5, -0.5j], [0.5j, 0.5]], dtype=complex)
 RHO_Y_MINUS = np.array([[0.5, 0.5j], [-0.5j, 0.5]], dtype=complex)
 
 
-def single_qubit_clifford_backrotation(rotation_description, measurement):
-    assert len(rotation_description) == len(measurement)
-    list_of_desity_matrices = []
-    for i in range(len(rotation_description)):
-        density_matrix = backrotate_single_measurement(
-            rotation_description[i], measurement[i]
-        )
+def single_qubit_clifford_backrotation(rotations, measurement) -> list[np.ndarray]:
+    assert len(rotations) == len(measurement)
+    list_of_density_matrices: list[np.ndarray] = []
+
+    for i in range(len(rotations)):
+        density_matrix = get_state_for_measurment(rotations[i], measurement[i])
         density_matrix = inverse_M_1(density_matrix)
-        list_of_desity_matrices.append(density_matrix)
-    return list_of_desity_matrices
+        list_of_density_matrices.append(density_matrix)
+
+    return list_of_density_matrices
 
 
-def backrotate_single_measurement(
+def get_state_for_measurment(
     single_qubit_rotation_description, single_qubit_measurement
 ) -> np.ndarray:
 
-    if single_qubit_rotation_description == "h":
+    if single_qubit_rotation_description == "X":
         if single_qubit_measurement == 0:
             return RHO_X_PLUS
         elif single_qubit_measurement == 1:
@@ -39,7 +39,7 @@ def backrotate_single_measurement(
         else:
             raise ValueError("Invalid measurement outcome (must be 0 or 1)")
 
-    elif single_qubit_rotation_description == "h,sdg":
+    elif single_qubit_rotation_description == "Y":
         if single_qubit_measurement == 0:
             return RHO_Y_PLUS
         elif single_qubit_measurement == 1:
@@ -47,7 +47,7 @@ def backrotate_single_measurement(
         else:
             raise ValueError("Invalid measurement outcome (must be 0 or 1)")
 
-    elif single_qubit_rotation_description == "id":
+    elif single_qubit_rotation_description == "Z":
         if single_qubit_measurement == 0:
             return RHO_Z_PLUS
         elif single_qubit_measurement == 1:

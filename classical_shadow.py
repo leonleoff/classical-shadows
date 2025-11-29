@@ -1,13 +1,14 @@
 import random
 from abc import ABC, abstractmethod
 
-import qiskit
+import numpy as np
+from qiskit import QuantumCircuit
 
 from backrotation import (
     n_qubit_clifford_backrotation,
     single_qubit_clifford_backrotation,
 )
-from random_clifford import get_random_nqbit_clifford, get_random_singlequbit_clifford
+from random_clifford import get_random_1qbit_clifford, get_random_nqbit_clifford
 
 # TODO: maybe refactor beacause when nqbit clifford are added
 
@@ -17,7 +18,7 @@ class ClassicalShadow(ABC):
         self.num_qubits: int = num_qubits
         self.single_qubit_clifford: bool = single_qubit_clifford
 
-        self.snapshots = []
+        self.snapshots: list[list[np.ndarray]] = []
 
     def get_desity_matrix_from_snapshots(self):
         print("generating density matrix from snapshots")
@@ -28,27 +29,27 @@ class ClassicalShadow(ABC):
     def add_snapshot(self):
         # get random rotation
         if self.single_qubit_clifford:
-            rotation_description = get_random_singlequbit_clifford(self.num_qubits)
+            rotations: list[str] = get_random_1qbit_clifford(self.num_qubits)
         else:
-            rotation_description = get_random_nqbit_clifford(self.num_qubits)
+            rotations: list[str] = get_random_nqbit_clifford(self.num_qubits)
 
-        state_generation_circuit = self.getStateCreationCircuit()
-        combined_circuit = self.make_cirucit_that_ceates_rotated_state(
-            rotation_description, state_generation_circuit
+        state_circuit: QuantumCircuit = self.get_state_circuit()
+        combined_circuit: QuantumCircuit = self.make_rotated_state_ciruit(
+            rotations, state_circuit
         )
 
         # getting the measurement results for each qubit
         measurement_results = self.run_cuircuit_and_get_measurment(combined_circuit)
 
-        snapshot = self.compute_snapshot(rotation_description, measurement_results)
+        snapshot = self.compute_snapshot(rotations, measurement_results)
         self.snapshots.append(snapshot)
 
     def predict_observable(self):
         raise NotImplementedError("This function is not yet implemented.")
 
-    def make_cirucit_that_ceates_rotated_state(
+    def make_rotated_state_ciruit(
         self, rotation_description, state_creation_circuit
-    ):
+    ) -> QuantumCircuit:
         print("checking if qbit count is the same ")
         print("makes a circuit out of description")
         print("combining both circuits")
@@ -67,5 +68,6 @@ class ClassicalShadow(ABC):
         raise NotImplementedError("This function is not yet implemented.")
 
     @abstractmethod
-    def getStateCreationCircuit(self):
+    def get_state_circuit(self) -> QuantumCircuit:
+        """ "Returns the quantum circuit that prepare the state of interest."""
         raise NotImplementedError("This method should be implemented by subclasses")
