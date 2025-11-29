@@ -53,7 +53,7 @@ class ClassicalShadow(ABC):
     def create_description_random_singlequbit_clifford(self):
         # TODO: maybe later enum
         # TODO: check if I H SH is correct
-        return [random.choice(["i", "h", "h,sdg"]) for i in range(self.num_qubits)]
+        return [random.choice(["id", "h", "h,sdg"]) for i in range(self.num_qubits)]
 
     def compute_snapshot(self, rotation_description, measurement):
         # measurement is a bitstring
