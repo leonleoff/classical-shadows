@@ -6,8 +6,8 @@ from qiskit import QuantumCircuit
 
 
 class AbstractClassicalShadow(ABC):
-    def __init__(self, num_qubits: int):
-        self.num_qubits: int = num_qubits
+    def __init__(self):
+        self.num_qubits: int = self.get_num_qubits()
 
         self.snapshots = []  # no type beacuse can be denstiy matrix or stabilzer
 
@@ -59,4 +59,8 @@ class AbstractClassicalShadow(ABC):
 
     @abstractmethod
     def get_random_rotations(self, num_qubits) -> list[str]:
+        raise NotImplementedError("This method should be implemented by subclasses")
+
+    @abstractmethod
+    def get_num_qubits(self) -> int:
         raise NotImplementedError("This method should be implemented by subclasses")
