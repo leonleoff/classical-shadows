@@ -17,8 +17,9 @@ class AbstractClassicalShadow(ABC):
 
     def get_original_density_matrix(self):
         circuit = self.shadow_protocol.get_state_circuit()
-        circuit.remove_final_measurements()
-        return DensityMatrix(circuit)
+        clean_circuit = circuit.copy()
+        clean_circuit.remove_final_measurements()
+        return DensityMatrix(clean_circuit).data
 
     def add_snapshot(self):
         rotations: list[str] = self.get_random_rotations(self.num_qubits)
