@@ -4,10 +4,13 @@ from abc import ABC, abstractmethod
 import numpy as np
 from qiskit import QuantumCircuit
 
+from shadow_protocol import ShadowProtocol
+
 
 class AbstractClassicalShadow(ABC):
-    def __init__(self):
-        self.num_qubits: int = self.get_num_qubits()
+    def __init__(self, shadow_protocol: ShadowProtocol):
+        self.num_qubits: int = shadow_protocol.get_num_qubits()
+        self.shadow_protocol: ShadowProtocol = shadow_protocol
 
         self.snapshots = []  # no type beacuse can be denstiy matrix or stabilzer
 
@@ -21,13 +24,15 @@ class AbstractClassicalShadow(ABC):
         rotations: list[str] = self.get_random_rotations(self.num_qubits)
 
         # prepare circuit
-        state_circuit: QuantumCircuit = self.get_state_circuit()
+        state_circuit: QuantumCircuit = self.shadow_protocol.get_state_circuit()
         combined_circuit: QuantumCircuit = self.make_rotated_state_ciruit(
             rotations, state_circuit
         )
 
         # run circuit and getting the measurement results for each qubit
-        measurement_results = self.run_cuircuit_and_get_measurment(combined_circuit)
+        measurement_results = self.shadow_protocol.run_cuircuit_and_get_measurment(
+            combined_circuit
+        )
         assert len(measurement_results) == self.num_qubits
 
         # roatet back and store snapshot
@@ -49,18 +54,5 @@ class AbstractClassicalShadow(ABC):
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
-    def run_cuircuit_and_get_measurment(self, circuit):
-        raise NotImplementedError("This function is not yet implemented.")
-
-    @abstractmethod
-    def get_state_circuit(self) -> QuantumCircuit:
-        """ "Returns the quantum circuit that prepare the state of interest."""
-        raise NotImplementedError("This method should be implemented by subclasses")
-
-    @abstractmethod
     def get_random_rotations(self, num_qubits) -> list[str]:
-        raise NotImplementedError("This method should be implemented by subclasses")
-
-    @abstractmethod
-    def get_num_qubits(self) -> int:
         raise NotImplementedError("This method should be implemented by subclasses")

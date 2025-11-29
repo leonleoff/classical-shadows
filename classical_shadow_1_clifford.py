@@ -1,5 +1,4 @@
 import random
-from abc import ABC, abstractmethod
 
 import numpy as np
 from qiskit import QuantumCircuit
@@ -22,19 +21,6 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
 
     def get_random_rotations(self, num_qubits) -> list[str]:
         return [random.choice(["Z", "H", "X"]) for i in range(num_qubits)]
-
-    @abstractmethod
-    def get_num_qubits(self) -> int:
-        raise NotImplementedError("This method should be implemented by subclasses")
-
-    @abstractmethod
-    def get_state_circuit(self) -> QuantumCircuit:
-        """ "Returns the quantum circuit that prepare the state of interest."""
-        raise NotImplementedError("This method should be implemented by subclasses")
-
-    @abstractmethod
-    def run_cuircuit_and_get_measurment(self, circuit):
-        raise NotImplementedError("This function is not yet implemented.")
 
 
 # Backrotation
