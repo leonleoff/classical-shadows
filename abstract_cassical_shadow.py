@@ -45,9 +45,21 @@ class AbstractClassicalShadow(ABC):
     def make_rotated_state_ciruit(
         self, rotation_description, state_creation_circuit
     ) -> QuantumCircuit:
-        print("checking if qbit count is the same ")
-        print("makes a circuit out of description")
-        print("combining both circuits")
+        circuit = state_creation_circuit.copy()
+        for qubit_index in range(self.num_qubits):
+            rotation = rotation_description[qubit_index]
+            if rotation == "X":
+                circuit.h(qubit_index)
+            elif rotation == "Y":
+                circuit.sdg(qubit_index)
+                circuit.h(qubit_index)
+            elif rotation == "Z":
+                pass  # no rotation needed
+            else:
+                raise ValueError(f"Unknown rotation description: {rotation}")
+
+        circuit.measure_all()
+        return circuit
 
     @abstractmethod
     def compute_snapshot(self, rotation_description, measurement):
