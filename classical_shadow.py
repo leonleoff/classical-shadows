@@ -1,3 +1,4 @@
+import random
 from abc import ABC, abstractmethod
 
 
@@ -13,25 +14,23 @@ class ClassicalShadow(ABC):
 
     def add_snapshot(self, num_qubits):
         self.num_qubits = num_qubits
-        rotation_cuircuit = (
-            self.create_tp_of_random_nqbit_clifford()
-        )  # TODO using types here in a smart way
+        rotation_description = self.create_description_tp_of_random_nqbit_clifford()
         state_genertaion_circuit = self.getStateCreationCircuit()
         combined_circuit = self.make_cirucit_that_ceates_rotated_state(
-            rotation_cuircuit, state_genertaion_circuit
+            rotation_description, state_genertaion_circuit
         )
         measurement = self.run_cuircuit_and_get_measurment(combined_circuit)
-        snapshot = self.compute_snapshot(rotation_cuircuit, measurement)
+        snapshot = self.compute_snapshot(rotation_description, measurement)
         self.snapshots.append(snapshot)
 
     def predict_observable(self):
         raise NotImplementedError("This function is not yet implemented.")
 
     def make_cirucit_that_ceates_rotated_state(
-        self, rotation_circuit, state_creation_circuit
+        self, rotation_description, state_creation_circuit
     ):
-        # TODO: check if qbit count is the same
         print("checking if qbit count is the same ")
+        print("makes a circuit out of description")
         print("combining both circuits")
 
     def create_random_nqbit_clifford(self):
@@ -39,15 +38,15 @@ class ClassicalShadow(ABC):
         """returns random n-qubit clifford circuits in the size of num_qubits"""
         raise NotImplementedError("This function is not yet implemented.")
 
-    def create_tp_of_random_nqbit_clifford(self):
-        # TODO: maybe there is something better than giving back a circuit as this is hard to back rotate
-        """returns shadow_size x tesnorpoducts of random single qubit clifford measurements in the size of num_qubits"""
-        print(
-            f"making a tensor product of random single qubit clifford measurements size of {self.num_qubits}"
-        )
+    def create_description_tp_of_random_nqbit_clifford(self):
+        # TODO: maybe later enum
+        # TODO: check if I H SH is correct
+        return [random.choice(["I", "H", "SH"]) for i in range(self.num_qubits)]
 
-    def compute_snapshot(self, rotation_circuit, measurement):
-        print("generating snapshot")
+    def compute_snapshot(self, rotation_description, measurement):
+        # measurement is a bitstring
+        # rotation description is a list of single qubit clifford rotations
+        print("")
 
     @abstractmethod
     def run_cuircuit_and_get_measurment(self, circuit):
