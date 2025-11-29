@@ -21,7 +21,7 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
         return list_of_density_matrices
 
     def get_random_rotations(self, num_qubits) -> list[str]:
-        return [random.choice(["Z", "H", "X"]) for i in range(num_qubits)]
+        return [random.choice(["Z", "Y", "X"]) for i in range(num_qubits)]
 
     def get_desity_matrix_from_snapshots(self):
         if not self.snapshots:
