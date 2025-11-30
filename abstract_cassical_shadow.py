@@ -62,6 +62,9 @@ class AbstractClassicalShadow(ABC):
         circuit.measure_all()
         return circuit
 
+    def get_number_of_snapshots(self) -> int:
+        return len(self.snapshots)
+
     @abstractmethod
     def compute_snapshot(self, rotation_description, measurement):
         raise NotImplementedError("This method should be implemented by subclasses")
