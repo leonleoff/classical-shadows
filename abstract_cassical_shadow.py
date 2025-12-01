@@ -57,7 +57,7 @@ class AbstractClassicalShadow(ABC):
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
-    def get_random_rotations(self, num_qubits) -> list[str]:
+    def get_random_rotations(self, num_qubits):
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
