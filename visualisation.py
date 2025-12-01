@@ -44,7 +44,7 @@ class LiveVisualizer:
         data = np.real(current_density_matrix)
 
         self.heatmap_live.set_data(data)
-        self.ax_live.set_title(f"Live Reconstruction (Snapshot {iteration})")
+        self.ax_live.set_title(f"Live Reconstruction (Shadow size {iteration})")
 
         clear_output(wait=True)
         display(self.fig)

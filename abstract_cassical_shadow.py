@@ -62,7 +62,7 @@ class AbstractClassicalShadow(ABC):
         circuit.measure_all()
         return circuit
 
-    def get_number_of_snapshots(self) -> int:
+    def get_shadow_size(self) -> int:
         return len(self.snapshots)
 
     @abstractmethod
