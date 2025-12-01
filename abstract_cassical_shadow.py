@@ -43,27 +43,14 @@ class AbstractClassicalShadow(ABC):
     def predict_observable(self):
         raise NotImplementedError("This function is not yet implemented.")
 
+    def get_shadow_size(self) -> int:
+        return len(self.snapshots)
+
+    @abstractmethod
     def make_rotated_state_ciruit(
         self, rotation_description, state_creation_circuit
     ) -> QuantumCircuit:
-        circuit = state_creation_circuit.copy()
-        for qubit_index in range(self.num_qubits):
-            rotation = rotation_description[qubit_index]
-            if rotation == "X":
-                circuit.h(qubit_index)
-            elif rotation == "Y":
-                circuit.sdg(qubit_index)
-                circuit.h(qubit_index)
-            elif rotation == "Z":
-                pass  # no rotation needed
-            else:
-                raise ValueError(f"Unknown rotation description: {rotation}")
-
-        circuit.measure_all()
-        return circuit
-
-    def get_shadow_size(self) -> int:
-        return len(self.snapshots)
+        raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
     def compute_snapshot(self, rotation_description, measurement):
