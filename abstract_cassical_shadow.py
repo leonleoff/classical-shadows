@@ -2,8 +2,10 @@ import random
 from abc import ABC, abstractmethod
 
 import numpy as np
-from qiskit import QuantumCircuit
+import qiskit.qasm2
+from qiskit import QuantumCircuit, transpile
 from qiskit.quantum_info import DensityMatrix
+from qiskit_aer import AerSimulator
 
 from shadow_protocol import ShadowProtocol
 
@@ -16,10 +18,11 @@ class AbstractClassicalShadow(ABC):
         self.snapshots = []  # no type beacuse can be denstiy matrix or stabilzer
 
     def get_original_density_matrix(self):
-        circuit = self.shadow_protocol.get_state_circuit()
+        circuit: QuantumCircuit = self.shadow_protocol.get_state_circuit()
         clean_circuit = circuit.copy()
         clean_circuit.remove_final_measurements()
-        return DensityMatrix(clean_circuit).data
+        rho = DensityMatrix(clean_circuit)
+        return rho.reverse_qargs().data
 
     def add_snapshot(self):
         rotations: list[str] = self.get_random_rotations(self.num_qubits)
