@@ -12,6 +12,7 @@ from qiskit.quantum_info import (
     Statevector,
     random_clifford,
 )
+from qiskit.visualization import array_to_latex
 
 from abstract_cassical_shadow import AbstractClassicalShadow
 
@@ -23,7 +24,7 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
     ) -> list[StabilizerState]:
         assert len(cliffords) == len(measurement)
 
-        stabilizer_states = []
+        stabilizer_states: list[StabilizerState] = []
 
         state_0 = StabilizerState(QuantumCircuit(1))
         qc_1 = QuantumCircuit(1)
@@ -31,13 +32,13 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
         state_1 = StabilizerState(qc_1)
 
         for cliff, bit in zip(cliffords, measurement):
-            if bit == 1:
+            if int(bit) == 1:
                 base_state = state_1
             else:
                 base_state = state_0
 
             state = base_state.copy()
-            pre_measurement_state = state.evolve(cliff.adjoint())
+            pre_measurement_state: StabilizerState = state.evolve(cliff.adjoint())
             stabilizer_states.append(pre_measurement_state)
 
         return stabilizer_states
@@ -66,18 +67,30 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
         # Randomly select a basis for each qubit
         return [random.choice(efficient_cliffords) for _ in range(num_qubits)]
 
-    def get_desity_matrix_from_stabilizers(self):
+    def get_desity_matrix_from_stabilizers(self, log: bool = False):
         if not self.stabilizer_list_list:
             raise ValueError("No stablizers prestent.")
         sum_rho = None
 
-        for row in self.stabilizer_list_list:
-
+        for i, row in enumerate(self.stabilizer_list_list):
+            if log:
+                print(f"Start with determing the desity matrix of snapshot{i}")
             inverted_qubits = []
 
-            for stab in row:
-                dm_data = DensityMatrix(stab).data
-                inverted_dm = 3 * dm_data - np.eye(2)
+            for j, stab in enumerate(row):
+                dm_data: DensityMatrix = self.stabilizer_to_density_matrix(stab)
+                if log:
+                    display(
+                        array_to_latex(dm_data.data, prefix=f"Backrotated state {j} = ")
+                    )
+
+                inverted_dm = 3 * dm_data.data - np.eye(2)
+
+                if log:
+                    display(
+                        array_to_latex(inverted_dm, prefix=f"Backrotated state {j} = ")
+                    )
+
                 inverted_qubits.append(inverted_dm)
 
             full_snapshot = reduce(np.kron, inverted_qubits)
