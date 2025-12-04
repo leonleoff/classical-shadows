@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import qiskit.qasm2
 from qiskit import QuantumCircuit, transpile
-from qiskit.quantum_info import DensityMatrix
+from qiskit.quantum_info import Clifford, DensityMatrix, StabilizerState
 from qiskit_aer import AerSimulator
 
 from shadow_protocol import ShadowProtocol
@@ -15,7 +15,7 @@ class AbstractClassicalShadow(ABC):
         self.num_qubits: int = shadow_protocol.get_num_qubits()
         self.shadow_protocol: ShadowProtocol = shadow_protocol
 
-        self.snapshots = []  # no type beacuse can be denstiy matrix or stabilzer
+        self.stabilizer_list_list: list[list[StabilizerState]] = []
 
     def get_original_density_matrix(self):
         circuit: QuantumCircuit = self.shadow_protocol.get_state_circuit()
@@ -25,12 +25,12 @@ class AbstractClassicalShadow(ABC):
         return rho.reverse_qargs().data
 
     def add_snapshot(self):
-        rotations: list[str] = self.get_random_rotations(self.num_qubits)
+        cliffords: list[Clifford] = self.get_random_rotations(self.num_qubits)
 
         # prepare circuit
         state_circuit: QuantumCircuit = self.shadow_protocol.get_state_circuit()
-        combined_circuit: QuantumCircuit = self.make_rotated_state_ciruit(
-            rotations, state_circuit
+        combined_circuit: QuantumCircuit = self.make_rotated_state_circuit(
+            cliffords, state_circuit
         )
 
         # run circuit and getting the measurement results for each qubit
@@ -40,23 +40,29 @@ class AbstractClassicalShadow(ABC):
         assert len(measurement_results) == self.num_qubits
 
         # roatet back and store snapshot
-        snapshot = self.compute_snapshot(rotations, measurement_results)
-        self.snapshots.append(snapshot)
+        stabilizers: list[StabilizerState] = (
+            self.compute_clifford_applied_to_measurements(
+                cliffords, measurement_results
+            )
+        )
+        self.stabilizer_list_list.append(stabilizers)
 
     def predict_observable(self):
         raise NotImplementedError("This function is not yet implemented.")
 
     def get_shadow_size(self) -> int:
-        return len(self.snapshots)
+        return len(self.stabilizer_list_list)
 
     @abstractmethod
-    def make_rotated_state_ciruit(
-        self, rotation_description, state_creation_circuit
+    def make_rotated_state_circuit(
+        self, cliffords, state_creation_circuit
     ) -> QuantumCircuit:
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
-    def compute_snapshot(self, rotation_description, measurement):
+    def compute_clifford_applied_to_measurements(
+        self, rotation_description, measurement
+    ):
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
@@ -64,5 +70,5 @@ class AbstractClassicalShadow(ABC):
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
-    def get_desity_matrix_from_snapshots(self):
+    def get_desity_matrix_from_stabilizers(self):
         raise NotImplementedError("This method should be implemented by subclasses")

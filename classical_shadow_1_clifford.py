@@ -3,115 +3,106 @@ from functools import reduce
 
 import numpy as np
 from qiskit import QuantumCircuit
+from qiskit.quantum_info import (
+    Clifford,
+    DensityMatrix,
+    Pauli,
+    SparsePauliOp,
+    StabilizerState,
+    Statevector,
+    random_clifford,
+)
 
 from abstract_cassical_shadow import AbstractClassicalShadow
 
 
 class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
 
-    def compute_snapshot(self, rotations, measurement):
-        assert len(rotations) == len(measurement)
-        list_of_density_matrices: list[np.ndarray] = []
+    def compute_clifford_applied_to_measurements(
+        self, cliffords: list[Clifford], measurement: list[int]
+    ) -> list[StabilizerState]:
+        assert len(cliffords) == len(measurement)
 
-        for i in range(len(rotations)):
-            density_matrix = get_state_for_measurment(rotations[i], measurement[i])
-            density_matrix = inverse_M_1(density_matrix)
-            list_of_density_matrices.append(density_matrix)
+        stabilizer_states = []
 
-        return list_of_density_matrices
+        state_0 = StabilizerState(QuantumCircuit(1))
+        qc_1 = QuantumCircuit(1)
+        qc_1.x(0)
+        state_1 = StabilizerState(qc_1)
 
-    def get_random_rotations(self, num_qubits) -> list[str]:
-        return [random.choice(["Z", "Y", "X"]) for i in range(num_qubits)]
-
-    def get_desity_matrix_from_snapshots(self):
-        if not self.snapshots:
-            raise ValueError("No snapshot prestent.")
-
-        first_snapshot_full = reduce(np.kron, self.snapshots[0])
-        sum_rho = np.zeros_like(first_snapshot_full, dtype=complex)
-
-        for snapshot_list in self.snapshots:
-            full_snapshot = reduce(np.kron, snapshot_list)
-            sum_rho += full_snapshot
-
-        return sum_rho / len(self.snapshots)
-
-    def make_rotated_state_ciruit(
-        self, rotation_description, state_creation_circuit
-    ) -> QuantumCircuit:
-        circuit = state_creation_circuit.copy()
-        for qubit_index in range(self.num_qubits):
-            rotation = rotation_description[qubit_index]
-            if rotation == "X":
-                circuit.h(qubit_index)
-            elif rotation == "Y":
-                circuit.sdg(qubit_index)
-                circuit.h(qubit_index)
-            elif rotation == "Z":
-                pass  # no rotation needed
+        for cliff, bit in zip(cliffords, measurement):
+            if bit == 1:
+                base_state = state_1
             else:
-                raise ValueError(f"Unknown rotation description: {rotation}")
+                base_state = state_0
 
-        circuit.measure_all()
-        return circuit
+            state = base_state.copy()
+            pre_measurement_state = state.evolve(cliff.adjoint())
+            stabilizer_states.append(pre_measurement_state)
 
+        return stabilizer_states
 
-# Backrotation
+    def get_random_rotations(self, num_qubits) -> list[Clifford]:
+        # Define the 3 efficient basis-change gates
+        # 1. I (measures Z)
+        # 2. H (measures X) -> H * X * H = Z
+        # 3. H S^dag (measures Y) -> (H S^dag) * Y * (S H) = Z
 
+        # Create the Cliffords
+        # (Tip: For better performance, you could move this creation to __init__)
+        c_z = Clifford(QuantumCircuit(1))  # Identity
 
-# Z-Basis (id): |0><0| und |1><1|
-RHO_Z_PLUS = np.array([[1, 0], [0, 0]], dtype=complex)
-RHO_Z_MINUS = np.array([[0, 0], [0, 1]], dtype=complex)
+        qc_x = QuantumCircuit(1)
+        qc_x.h(0)
+        c_x = Clifford(qc_x)
 
-# X-Basis (h): |+><+| und |-><-|
-# |+> = 1/sqrt(2) * (|0> + |1>)
-RHO_X_PLUS = np.array([[0.5, 0.5], [0.5, 0.5]], dtype=complex)
-RHO_X_MINUS = np.array([[0.5, -0.5], [-0.5, 0.5]], dtype=complex)
+        qc_y = QuantumCircuit(1)
+        qc_y.sdg(0)  # S-dagger
+        qc_y.h(0)
+        c_y = Clifford(qc_y)
 
-# Y-Basis (h,sdg): |+i><+i| und |-i><-i|
-# |+i> = 1/sqrt(2) * (|0> + i|1>)
-RHO_Y_PLUS = np.array([[0.5, -0.5j], [0.5j, 0.5]], dtype=complex)
-RHO_Y_MINUS = np.array([[0.5, 0.5j], [-0.5j, 0.5]], dtype=complex)
+        efficient_cliffords = [c_z, c_x, c_y]
 
+        # Randomly select a basis for each qubit
+        return [random.choice(efficient_cliffords) for _ in range(num_qubits)]
 
-def get_state_for_measurment(
-    single_qubit_rotation_description, single_qubit_measurement
-) -> np.ndarray:
+    def get_desity_matrix_from_stabilizers(self):
+        if not self.stabilizer_list_list:
+            raise ValueError("No stablizers prestent.")
+        sum_rho = None
 
-    if single_qubit_rotation_description == "X":
-        if single_qubit_measurement == 0:
-            return RHO_X_PLUS
-        elif single_qubit_measurement == 1:
-            return RHO_X_MINUS
-        else:
-            raise ValueError("Invalid measurement outcome (must be 0 or 1)")
+        for row in self.stabilizer_list_list:
 
-    elif single_qubit_rotation_description == "Y":
-        if single_qubit_measurement == 0:
-            return RHO_Y_PLUS
-        elif single_qubit_measurement == 1:
-            return RHO_Y_MINUS
-        else:
-            raise ValueError("Invalid measurement outcome (must be 0 or 1)")
+            inverted_qubits = []
 
-    elif single_qubit_rotation_description == "Z":
-        if single_qubit_measurement == 0:
-            return RHO_Z_PLUS
-        elif single_qubit_measurement == 1:
-            return RHO_Z_MINUS
-        else:
-            raise ValueError("Invalid measurement outcome (must be 0 or 1)")
+            for stab in row:
+                dm_data = DensityMatrix(stab).data
+                inverted_dm = 3 * dm_data - np.eye(2)
+                inverted_qubits.append(inverted_dm)
 
-    else:
-        raise ValueError(
-            f"Invalid rotation description: {single_qubit_rotation_description}"
-        )
+            full_snapshot = reduce(np.kron, inverted_qubits)
 
+            if sum_rho is None:
+                sum_rho = full_snapshot
+            else:
+                sum_rho += full_snapshot
 
-def inverse_M_1(density_matrix: np.ndarray) -> np.ndarray:
+        return sum_rho / len(self.stabilizer_list_list)
 
-    # Calculate the snapshot using the formula for n=1
-    # 3 * rho - Identity
-    snapshot = 3 * density_matrix - np.eye(2, dtype=complex)
+    def make_rotated_state_circuit(
+        self, cliffords: list[Clifford], state_creation_circuit: QuantumCircuit
+    ) -> QuantumCircuit:
+        assert len(cliffords) == state_creation_circuit.num_qubits
 
-    return snapshot
+        combined_circuit = state_creation_circuit.copy()
+        combined_circuit.remove_final_measurements()
+
+        for qubit_index in range(self.num_qubits):
+            clifford: Clifford = cliffords[qubit_index]
+            clifford_circuit: QuantumCircuit = clifford.to_circuit()
+            combined_circuit.compose(
+                clifford_circuit, qubits=[qubit_index], inplace=True
+            )
+
+        combined_circuit.measure_all()
+        return combined_circuit
