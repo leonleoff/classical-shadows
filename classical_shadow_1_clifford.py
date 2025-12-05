@@ -44,13 +44,6 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
         return stabilizer_states
 
     def get_random_rotations(self, num_qubits) -> list[Clifford]:
-        # Define the 3 efficient basis-change gates
-        # 1. I (measures Z)
-        # 2. H (measures X) -> H * X * H = Z
-        # 3. H S^dag (measures Y) -> (H S^dag) * Y * (S H) = Z
-
-        # Create the Cliffords
-        # (Tip: For better performance, you could move this creation to __init__)
         c_z = Clifford(QuantumCircuit(1))  # Identity
 
         qc_x = QuantumCircuit(1)
@@ -80,15 +73,16 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
             for j, stab in enumerate(row):
                 dm_data: DensityMatrix = self.stabilizer_to_density_matrix(stab)
                 if log:
-                    display(
-                        array_to_latex(dm_data.data, prefix=f"Backrotated state {j} = ")
-                    )
+                    display(array_to_latex(dm_data, prefix=f"Backrotated state {j} = "))
 
-                inverted_dm = 3 * dm_data.data - np.eye(2)
+                inverted_dm = 3 * dm_data - np.eye(2)
 
                 if log:
                     display(
-                        array_to_latex(inverted_dm, prefix=f"Backrotated state {j} = ")
+                        array_to_latex(
+                            inverted_dm,
+                            prefix=f"M^-1 applied to backrotated state {j} = ",
+                        )
                     )
 
                 inverted_qubits.append(inverted_dm)
