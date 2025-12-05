@@ -1,5 +1,4 @@
 import sys
-import unittest
 
 import numpy as np
 from qiskit import QuantumCircuit
@@ -39,39 +38,28 @@ class IdProtocol(ShadowProtocol):
         return bit_list[::-1]
 
 
-# test
+def test_reconstruction_with_identity():
+    protocol = IdProtocol()
+    shadow_instance = AlwaysIdClassicalShadow(protocol)
 
+    expected_matrix = np.array(
+        [[4, 0, 0, 0], [0, -2, 0, 0], [0, 0, -2, 0], [0, 0, 0, 1]]
+    )
 
-class TestClassicalShadowIdentity(unittest.TestCase):
+    for _ in range(5):
+        shadow_instance.add_snapshot()
 
-    def setUp(self):
-        self.protocol = IdProtocol()
-        self.shadow_instance = AlwaysIdClassicalShadow(self.protocol)
+    reconstructed_dm = shadow_instance.get_desity_matrix_from_stabilizers()
 
-        self.expected_matrix = np.array(
-            [[4, 0, 0, 0], [0, -2, 0, 0], [0, 0, -2, 0], [0, 0, 0, 1]]
-        )
+    if hasattr(reconstructed_dm, "data"):
+        reconstructed_dm = reconstructed_dm.data
 
-    def test_reconstruction_with_identity(self):
+    print("\nReconstructed Matrix:\n", np.real(reconstructed_dm))
+    print("Expected Matrix:\n", expected_matrix)
 
-        for _ in range(5):
-            self.shadow_instance.add_snapshot()
-
-        reconstructed_dm = self.shadow_instance.get_desity_matrix_from_stabilizers()
-
-        if hasattr(reconstructed_dm, "data"):
-            reconstructed_dm = reconstructed_dm.data
-
-        print("\nReconstructed Matrix:\n", np.real(reconstructed_dm))
-        print("Expected Matrix:\n", self.expected_matrix)
-
-        np.testing.assert_allclose(
-            np.real(reconstructed_dm),
-            self.expected_matrix,
-            atol=1e-5,
-            err_msg="The reconstructed density matrix does not match the expected theoretical matrix.",
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()
+    np.testing.assert_allclose(
+        np.real(reconstructed_dm),
+        expected_matrix,
+        atol=1e-5,
+        err_msg="The reconstructed density matrix does not match the expected theoretical matrix.",
+    )
