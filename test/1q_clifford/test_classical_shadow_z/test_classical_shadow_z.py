@@ -11,14 +11,14 @@ from classical_shadow_1_clifford import ClassicalShadow_1_CLIFFORD
 from shadow_protocol import ShadowProtocol
 
 
-class AlwaysIdClassicalShadow(ClassicalShadow_1_CLIFFORD):
+class ClassicalShadow(ClassicalShadow_1_CLIFFORD):
 
     def get_random_rotations(self, num_qubits) -> list[Clifford]:
         c_i = Clifford(QuantumCircuit(1))  # Identity
         return [c_i for _ in range(num_qubits)]
 
 
-class IdProtocol(ShadowProtocol):
+class Protocol(ShadowProtocol):
 
     def get_num_qubits(self) -> int:
         return 2
@@ -39,23 +39,17 @@ class IdProtocol(ShadowProtocol):
 
 
 def test_reconstruction_with_identity():
-    protocol = IdProtocol()
-    shadow_instance = AlwaysIdClassicalShadow(protocol)
+    protocol = Protocol()
+    shadow = ClassicalShadow(protocol)
 
     expected_matrix = np.array(
-        [
-            [1 / 4, -3 / 4, 3 / 4, -9 / 4],
-            [-3 / 4, 1 / 4, -9 / 4, 3 / 4],
-            [3 / 4, -9 / 4, 1 / 4, -3 / 4],
-            [-9 / 4, 3 / 4, -3 / 4, 1 / 4],
-        ],
-        dtype=float,
+        [[4, 0, 0, 0], [0, -2, 0, 0], [0, 0, -2, 0], [0, 0, 0, 1]]
     )
 
     for _ in range(2000):
-        shadow_instance.add_snapshot()
+        shadow.add_snapshot()
 
-    reconstructed_dm = shadow_instance.get_desity_matrix_from_stabilizers()
+    reconstructed_dm = shadow.get_desity_matrix_from_stabilizers()
 
     if hasattr(reconstructed_dm, "data"):
         reconstructed_dm = reconstructed_dm.data

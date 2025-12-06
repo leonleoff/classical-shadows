@@ -43,9 +43,14 @@ class Protocol(ShadowProtocol):
 def test_reconstruction_with_identity():
     protocol = Protocol()
     shadow = Classical_shadow(protocol)
-
     expected_matrix = np.array(
-        [[4, 0, 0, 0], [0, -2, 0, 0], [0, 0, -2, 0], [0, 0, 0, 1]]
+        [
+            [1 / 4, -3 / 4, 3 / 4, -9 / 4],
+            [-3 / 4, 1 / 4, -9 / 4, 3 / 4],
+            [3 / 4, -9 / 4, 1 / 4, -3 / 4],
+            [-9 / 4, 3 / 4, -3 / 4, 1 / 4],
+        ],
+        dtype=float,
     )
 
     for _ in range(5):
