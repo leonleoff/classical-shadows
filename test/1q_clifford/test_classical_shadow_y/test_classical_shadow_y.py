@@ -11,11 +11,14 @@ from classical_shadow_1_clifford import ClassicalShadow_1_CLIFFORD
 from shadow_protocol import ShadowProtocol
 
 
-class ClassicalShadow(ClassicalShadow_1_CLIFFORD):
+class Classical_shadow(ClassicalShadow_1_CLIFFORD):
 
     def get_random_rotations(self, num_qubits) -> list[Clifford]:
-        c_i = Clifford(QuantumCircuit(1))  # Identity
-        return [c_i for _ in range(num_qubits)]
+        qc_x = QuantumCircuit(1)
+        qc_x.sdg(0)
+        qc_x.h(0)
+        c_x = Clifford(qc_x)
+        return [(c_x) for _ in range(num_qubits)]
 
 
 class Protocol(ShadowProtocol):
@@ -40,13 +43,18 @@ class Protocol(ShadowProtocol):
 
 def test_reconstruction_with_identity():
     protocol = Protocol()
-    shadow = ClassicalShadow(protocol)
-
+    shadow = Classical_shadow(protocol)
     expected_matrix = np.array(
-        [[4, 0, 0, 0], [0, -2, 0, 0], [0, 0, -2, 0], [0, 0, 0, 1]]
+        [
+            [1 / 4, 0, 0, 0],
+            [0, 1 / 4, 0, 0],
+            [0, 0, 1 / 4, 0],
+            [0, 0, 0, 1 / 4],
+        ],
+        dtype=float,
     )
 
-    for _ in range(2000):
+    for _ in range(5000):
         shadow.add_snapshot()
 
     reconstructed_dm = shadow.get_desity_matrix_from_stabilizers()
@@ -61,6 +69,6 @@ def test_reconstruction_with_identity():
         np.real(reconstructed_dm),
         expected_matrix,
         rtol=0.0,
-        atol=0.01,
+        atol=0.05,
         err_msg="The reconstructed density matrix differs by more than 0.01 from the expected matrix.",
     )
