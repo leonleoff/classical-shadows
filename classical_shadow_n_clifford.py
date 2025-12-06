@@ -12,24 +12,24 @@ from qiskit.quantum_info import (
 from abstract_cassical_shadow import AbstractClassicalShadow
 
 
-# IMPORTANT: This implementation will store snapshots that are NOT passed through the inverse M map.
-# this will be needed to be done when using the snapshots in some way.
 class ClassicalShadow_N_CLIFFORD(AbstractClassicalShadow):
 
     def compute_clifford_applied_to_measurements(
-        self, rotations, measurement
+        self, cliffords, measurement_results
     ) -> list[StabilizerState]:
+        assert len(cliffords) == 1
+        assert len(measurement_results) == self.num_qubits
 
-        qc = QuantumCircuit(self.num_qubits)
-        for i, bit in enumerate(measurement):
+        base_state_qc = QuantumCircuit(self.num_qubits)
+
+        for i, bit in enumerate(measurement_results):
             if bit == 1:
-                qc.x(i)  # apply X gate to flip |0> to |1>
+                base_state_qc.x(i)
 
-        stab_state = StabilizerState(qc)
+        state = base_state_qc.copy()
+        pre_measurement_state: StabilizerState = state.evolve(cliffords[0].adjoint())
 
-        u_dagger = rotations.adjoint()
-
-        return stab_state.evolve(u_dagger)
+        return [pre_measurement_state]
 
     def get_random_rotations(self, num_qubits):
         # S. Bravyi and D. Maslov, Hadamard-free circuits expose the structure of the Clifford group. https://arxiv.org/abs/2003.09412
@@ -39,20 +39,15 @@ class ClassicalShadow_N_CLIFFORD(AbstractClassicalShadow):
         if not self.stabilizer_list_list:
             raise ValueError("No snapshot present.")
 
-        n = self.num_qubits
-
-        sum_rho = np.zeros((2**n, 2**n), dtype=complex)
-
-        identity = np.eye(2**n)
-
-        scaling_factor = 2**n + 1
-
-        for stab_state in self.stabilizer_list_list:
-            psi_matrix = stab_state.to_operator().data
-
-            snapshot_rho = (scaling_factor * psi_matrix) - identity
-
-            sum_rho += snapshot_rho
+        sum_rho = None
+        for i, row in enumerate(self.stabilizer_list_list):
+            assert len(row) == 1
+            dm_data: DensityMatrix = self.stabilizer_to_density_matrix(row[0])
+            inverted_dm = 3 * dm_data - np.eye(self.num_qubits)
+            if sum_rho is None:
+                sum_rho = inverted_dm
+            else:
+                sum_rho += inverted_dm
 
         return sum_rho / len(self.stabilizer_list_list)
 

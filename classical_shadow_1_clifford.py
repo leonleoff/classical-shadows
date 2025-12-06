@@ -20,10 +20,10 @@ from abstract_cassical_shadow import AbstractClassicalShadow
 class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
 
     def compute_clifford_applied_to_measurements(
-        self, cliffords: list[Clifford], measurement: list[int]
+        self, cliffords: list[Clifford], measurement_results: list[int]
     ) -> list[StabilizerState]:
 
-        assert len(cliffords) == len(measurement)
+        assert len(cliffords) == len(measurement_results)
 
         stabilizer_states: list[StabilizerState] = []
 
@@ -34,7 +34,7 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
         qc_1.x(0)
         state_1 = StabilizerState(qc_1)
 
-        for i, (cliff, bit) in enumerate(zip(cliffords, measurement)):
+        for i, (cliff, bit) in enumerate(zip(cliffords, measurement_results)):
             bit_val = int(bit)
 
             if bit_val == 1:
@@ -62,24 +62,12 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
         sum_rho = None
 
         for i, row in enumerate(self.stabilizer_list_list):
-            if log:
-                print(f"Start with determing the desity matrix of snapshot{i}")
             inverted_qubits = []
 
             for j, stab in enumerate(row):
                 dm_data: DensityMatrix = self.stabilizer_to_density_matrix(stab)
-                if log:
-                    display(array_to_latex(dm_data, prefix=f"Backrotated state {j} = "))
 
                 inverted_dm = 3 * dm_data - np.eye(2)
-
-                if log:
-                    display(
-                        array_to_latex(
-                            inverted_dm,
-                            prefix=f"M^-1 applied to backrotated state {j} = ",
-                        )
-                    )
 
                 inverted_qubits.append(inverted_dm)
 

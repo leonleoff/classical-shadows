@@ -72,9 +72,7 @@ class AbstractClassicalShadow(ABC):
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
-    def compute_clifford_applied_to_measurements(
-        self, rotation_description, measurement
-    ):
+    def compute_clifford_applied_to_measurements(self, cliffords, measurement_results):
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
