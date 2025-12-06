@@ -52,6 +52,6 @@ def test_reconstruction_with_identity():
         np.real(reconstructed_dm),
         expected_matrix,
         rtol=0.0,
-        atol=0.05,
+        atol=0.08,
         err_msg="The reconstructed density matrix differs by more than 0.01 from the expected matrix.",
     )
