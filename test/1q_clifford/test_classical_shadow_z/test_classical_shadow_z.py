@@ -63,11 +63,3 @@ def test_reconstruction_with_identity():
         atol=1e-5,
         err_msg="The reconstructed density matrix does not match the expected theoretical matrix.",
     )
-
-    np.testing.assert_allclose(
-        np.real(reconstructed_dm),
-        expected_matrix,
-        rtol=0.0,
-        atol=0.01,
-        err_msg="The reconstructed density matrix differs by more than 0.01 from the expected matrix.",
-    )
