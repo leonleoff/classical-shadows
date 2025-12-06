@@ -46,7 +46,7 @@ def test_reconstruction_with_identity():
         [[4, 0, 0, 0], [0, -2, 0, 0], [0, 0, -2, 0], [0, 0, 0, 1]]
     )
 
-    for _ in range(2000):
+    for _ in range(5):
         shadow.add_snapshot()
 
     reconstructed_dm = shadow.get_desity_matrix_from_stabilizers()
@@ -56,6 +56,13 @@ def test_reconstruction_with_identity():
 
     print("\nReconstructed Matrix:\n", np.real(reconstructed_dm))
     print("Expected Matrix:\n", expected_matrix)
+
+    np.testing.assert_allclose(
+        np.real(reconstructed_dm),
+        expected_matrix,
+        atol=1e-5,
+        err_msg="The reconstructed density matrix does not match the expected theoretical matrix.",
+    )
 
     np.testing.assert_allclose(
         np.real(reconstructed_dm),

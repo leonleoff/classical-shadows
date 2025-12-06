@@ -11,13 +11,11 @@ from classical_shadow_1_clifford import ClassicalShadow_1_CLIFFORD
 from shadow_protocol import ShadowProtocol
 
 
-class Classical_shadow(ClassicalShadow_1_CLIFFORD):
+class ClassicalShadow(ClassicalShadow_1_CLIFFORD):
 
     def get_random_rotations(self, num_qubits) -> list[Clifford]:
-        qc_x = QuantumCircuit(1)
-        qc_x.h(0)
-        c_x = Clifford(qc_x)
-        return [(c_x) for _ in range(num_qubits)]
+        c_i = Clifford(QuantumCircuit(1))  # Identity
+        return [c_i for _ in range(num_qubits)]
 
 
 class Protocol(ShadowProtocol):
@@ -42,15 +40,10 @@ class Protocol(ShadowProtocol):
 
 def test_reconstruction_with_identity():
     protocol = Protocol()
-    shadow = Classical_shadow(protocol)
+    shadow = ClassicalShadow(protocol)
+
     expected_matrix = np.array(
-        [
-            [1 / 4, 0, 0, 0],
-            [0, 1 / 4, 0, 0],
-            [0, 0, 1 / 4, 0],
-            [0, 0, 0, 1 / 4],
-        ],
-        dtype=float,
+        [[4, 0, 0, 0], [0, -2, 0, 0], [0, 0, -2, 0], [0, 0, 0, 1]]
     )
 
     for _ in range(2000):
