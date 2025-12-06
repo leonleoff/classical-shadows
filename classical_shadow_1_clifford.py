@@ -22,6 +22,7 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
     def compute_clifford_applied_to_measurements(
         self, cliffords: list[Clifford], measurement: list[int]
     ) -> list[StabilizerState]:
+
         assert len(cliffords) == len(measurement)
 
         stabilizer_states: list[StabilizerState] = []
@@ -33,38 +34,27 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
         qc_1.x(0)
         state_1 = StabilizerState(qc_1)
 
-        for cliff, bit in zip(cliffords, measurement):
-            if int(bit) == 1:
+        for i, (cliff, bit) in enumerate(zip(cliffords, measurement)):
+            bit_val = int(bit)
+
+            if bit_val == 1:
                 base_state = state_1
-            elif int(bit) == 0:
+            elif bit_val == 0:
                 base_state = state_0
             else:
-                raise ValueError(
-                    f"Invalid measurement result: {bit_val}. Expected 0 or 1."
-                )
+                error_msg = f"Invalid measurement result: {bit_val}. Expected 0 or 1."
+                raise ValueError(error_msg)
 
             state = base_state.copy()
+
             pre_measurement_state: StabilizerState = state.evolve(cliff.adjoint())
             stabilizer_states.append(pre_measurement_state)
 
         return stabilizer_states
 
     def get_random_rotations(self, num_qubits) -> list[Clifford]:
-        c_z = Clifford(QuantumCircuit(1))  # Identity
-
-        qc_x = QuantumCircuit(1)
-        qc_x.h(0)
-        c_x = Clifford(qc_x)
-
-        qc_y = QuantumCircuit(1)
-        qc_y.sdg(0)  # S-dagger
-        qc_y.h(0)
-        c_y = Clifford(qc_y)
-
-        efficient_cliffords = [c_z, c_x, c_y]
-
-        # Randomly select a basis for each qubit
-        return [random.choice(efficient_cliffords) for _ in range(num_qubits)]
+        # S. Bravyi and D. Maslov, Hadamard-free circuits expose the structure of the Clifford group. https://arxiv.org/abs/2003.09412
+        return [random_clifford(1) for _ in range(num_qubits)]
 
     def get_desity_matrix_from_stabilizers(self, log: bool = False):
         if not self.stabilizer_list_list:
