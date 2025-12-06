@@ -21,7 +21,7 @@ class Protocol(ShadowProtocol):
         circuit.h(0)
         return circuit
 
-    def run_cuircuit_and_get_measurment(self, circuit) -> list[int]:
+    def run_circuit_and_get_measurement(self, circuit) -> list[int]:
         sim = AerSimulator()
 
         job = sim.run(circuit, shots=997)
@@ -49,7 +49,7 @@ def test_reconstruction_with_identity():
     for _ in range(5000):
         shadow.add_snapshot()
 
-    reconstructed_dm = shadow.get_desity_matrix_from_stabilizers()
+    reconstructed_dm = shadow.get_density_matrix_from_stabilizers()
 
     if hasattr(reconstructed_dm, "data"):
         reconstructed_dm = reconstructed_dm.data

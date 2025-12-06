@@ -36,7 +36,7 @@ class ClassicalShadow_N_CLIFFORD(AbstractClassicalShadow):
         # S. Bravyi and D. Maslov, Hadamard-free circuits expose the structure of the Clifford group. https://arxiv.org/abs/2003.09412
         return [random_clifford(num_qubits)]
 
-    def get_desity_matrix_from_stabilizers(self):
+    def get_density_matrix_from_stabilizers(self):
         if not self.stabilizer_list_list:
             raise ValueError("No snapshot present.")
 

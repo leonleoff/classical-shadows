@@ -45,7 +45,7 @@ class AbstractClassicalShadow(ABC):
         )
 
         # run circuit and getting the measurement results for each qubit
-        measurement_results = self.shadow_protocol.run_cuircuit_and_get_measurment(
+        measurement_results = self.shadow_protocol.run_circuit_and_get_measurement(
             combined_circuit
         )
 
@@ -80,5 +80,5 @@ class AbstractClassicalShadow(ABC):
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
-    def get_desity_matrix_from_stabilizers(self):
+    def get_density_matrix_from_stabilizers(self):
         raise NotImplementedError("This method should be implemented by subclasses")

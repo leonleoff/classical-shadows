@@ -14,5 +14,5 @@ class ShadowProtocol(ABC):
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
-    def run_cuircuit_and_get_measurment(self, circuit):
+    def run_circuit_and_get_measurement(self, circuit):
         raise NotImplementedError("This function is not yet implemented.")
