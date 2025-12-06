@@ -26,7 +26,9 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
 
         stabilizer_states: list[StabilizerState] = []
 
-        state_0 = StabilizerState(QuantumCircuit(1))
+        qc_0 = QuantumCircuit(1)
+        state_0 = StabilizerState(qc_0)
+
         qc_1 = QuantumCircuit(1)
         qc_1.x(0)
         state_1 = StabilizerState(qc_1)
@@ -34,8 +36,12 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
         for cliff, bit in zip(cliffords, measurement):
             if int(bit) == 1:
                 base_state = state_1
-            else:
+            elif int(bit) == 0:
                 base_state = state_0
+            else:
+                raise ValueError(
+                    f"Invalid measurement result: {bit_val}. Expected 0 or 1."
+                )
 
             state = base_state.copy()
             pre_measurement_state: StabilizerState = state.evolve(cliff.adjoint())
