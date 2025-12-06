@@ -26,14 +26,15 @@ class ClassicalShadow_N_CLIFFORD(AbstractClassicalShadow):
             if bit == 1:
                 base_state_qc.x(i)
 
-        state = base_state_qc.copy()
+        base_stab = StabilizerState(base_state_qc)
+        state = base_stab.copy()
         pre_measurement_state: StabilizerState = state.evolve(cliffords[0].adjoint())
 
         return [pre_measurement_state]
 
     def get_random_rotations(self, num_qubits):
         # S. Bravyi and D. Maslov, Hadamard-free circuits expose the structure of the Clifford group. https://arxiv.org/abs/2003.09412
-        return random_clifford(num_qubits)
+        return [random_clifford(num_qubits)]
 
     def get_desity_matrix_from_stabilizers(self):
         if not self.stabilizer_list_list:
@@ -43,7 +44,7 @@ class ClassicalShadow_N_CLIFFORD(AbstractClassicalShadow):
         for i, row in enumerate(self.stabilizer_list_list):
             assert len(row) == 1
             dm_data: DensityMatrix = self.stabilizer_to_density_matrix(row[0])
-            inverted_dm = 3 * dm_data - np.eye(self.num_qubits)
+            inverted_dm = 3 * dm_data - np.eye(2**self.num_qubits)
             if sum_rho is None:
                 sum_rho = inverted_dm
             else:
