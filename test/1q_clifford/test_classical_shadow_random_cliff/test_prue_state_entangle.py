@@ -17,7 +17,10 @@ class Protocol(ShadowProtocol):
         return 2
 
     def get_state_circuit(self) -> QuantumCircuit:
-        return QuantumCircuit(2)
+        circuit = QuantumCircuit(2)
+        circuit.h(0)
+        circuit.cx(0, 1)
+        return circuit
 
     def run_cuircuit_and_get_measurment(self, circuit) -> list[int]:
         sim = AerSimulator()
