@@ -26,7 +26,9 @@ class Protocol(ShadowProtocol):
         return 2
 
     def get_state_circuit(self) -> QuantumCircuit:
-        return QuantumCircuit(2)
+        qc = QuantumCircuit(2)
+        qc.x(0)
+        return qc
 
     def run_circuit_and_get_measurement(self, circuit) -> list[int]:
         sim = AerSimulator()
@@ -44,7 +46,7 @@ def test_reconstruction_with_identity():
     shadow = ClassicalShadow(protocol)
 
     expected_matrix = np.array(
-        [[4, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, -1]]
+        [[-1, 0, 0, 0], [0, -1, 0, 0], [0, 0, 4, 0], [0, 0, 0, -1]]
     )
 
     for _ in range(5):

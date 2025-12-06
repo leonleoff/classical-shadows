@@ -8,6 +8,7 @@ from qiskit.quantum_info import (
     StabilizerState,
     random_clifford,
 )
+from qiskit.visualization import array_to_latex
 
 from abstract_cassical_shadow import AbstractClassicalShadow
 
@@ -20,7 +21,9 @@ class ClassicalShadow_N_CLIFFORD(AbstractClassicalShadow):
         assert len(cliffords) == 1
         assert len(measurement_results) == self.num_qubits
 
-        base_state_qc = QuantumCircuit(self.num_qubits)
+        base_state_qc = QuantumCircuit(
+            self.num_qubits
+        )  # As this is a qiskit circuit the qbit order is here wrong
 
         for i, bit in enumerate(measurement_results):
             if bit == 1:
@@ -28,9 +31,17 @@ class ClassicalShadow_N_CLIFFORD(AbstractClassicalShadow):
 
         base_stab = StabilizerState(base_state_qc)
         state = base_stab.copy()
+
         pre_measurement_state: StabilizerState = state.evolve(cliffords[0].adjoint())
 
-        return [pre_measurement_state]
+        # we need to change the qbit order here to ensure the mathmatical order of qbits
+        qc_reverse = QuantumCircuit(self.num_qubits)
+        for i in range(self.num_qubits // 2):
+            qc_reverse.swap(i, self.num_qubits - 1 - i)
+        clifford_reverse = Clifford(qc_reverse)
+        reversed_state: StabilizerState = pre_measurement_state.evolve(clifford_reverse)
+
+        return [reversed_state]
 
     def get_random_rotations(self, num_qubits):
         # S. Bravyi and D. Maslov, Hadamard-free circuits expose the structure of the Clifford group. https://arxiv.org/abs/2003.09412
