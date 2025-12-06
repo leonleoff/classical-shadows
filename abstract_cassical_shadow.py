@@ -82,3 +82,7 @@ class AbstractClassicalShadow(ABC):
     @abstractmethod
     def get_density_matrix_from_stabilizers(self):
         raise NotImplementedError("This method should be implemented by subclasses")
+
+    @abstractmethod
+    def calculate_fidelity(self):
+        raise NotImplementedError("This method should be implemented by subclasses")
