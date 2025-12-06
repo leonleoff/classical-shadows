@@ -44,7 +44,9 @@ class ClassicalShadow_N_CLIFFORD(AbstractClassicalShadow):
         for i, row in enumerate(self.stabilizer_list_list):
             assert len(row) == 1
             dm_data: DensityMatrix = self.stabilizer_to_density_matrix(row[0])
-            inverted_dm = 3 * dm_data - np.eye(2**self.num_qubits)
+            inverted_dm = ((2**self.num_qubits) + 1) * dm_data - np.eye(
+                2**self.num_qubits
+            )
             if sum_rho is None:
                 sum_rho = inverted_dm
             else:
