@@ -53,7 +53,7 @@ def test_reconstruction_with_identity():
         dtype=float,
     )
 
-    for _ in range(2000):
+    for _ in range(5000):
         shadow.add_snapshot()
 
     reconstructed_dm = shadow.get_desity_matrix_from_stabilizers()
