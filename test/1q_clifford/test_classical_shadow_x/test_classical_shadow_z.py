@@ -5,7 +5,7 @@ from qiskit import QuantumCircuit
 from qiskit.quantum_info import Clifford
 from qiskit_aer import AerSimulator
 
-sys.path.insert(0, "../..")
+sys.path.insert(0, "../../..")
 
 from classical_shadow_1_clifford import ClassicalShadow_1_CLIFFORD
 from shadow_protocol import ShadowProtocol
