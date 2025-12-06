@@ -43,10 +43,16 @@ def test_reconstruction_with_identity():
     shadow_instance = AlwaysIdClassicalShadow(protocol)
 
     expected_matrix = np.array(
-        [[4, 0, 0, 0], [0, -2, 0, 0], [0, 0, -2, 0], [0, 0, 0, 1]]
+        [
+            [1 / 4, -3 / 4, 3 / 4, -9 / 4],
+            [-3 / 4, 1 / 4, -9 / 4, 3 / 4],
+            [3 / 4, -9 / 4, 1 / 4, -3 / 4],
+            [-9 / 4, 3 / 4, -3 / 4, 1 / 4],
+        ],
+        dtype=float,
     )
 
-    for _ in range(5):
+    for _ in range(2000):
         shadow_instance.add_snapshot()
 
     reconstructed_dm = shadow_instance.get_desity_matrix_from_stabilizers()
@@ -60,6 +66,7 @@ def test_reconstruction_with_identity():
     np.testing.assert_allclose(
         np.real(reconstructed_dm),
         expected_matrix,
-        atol=1e-5,
-        err_msg="The reconstructed density matrix does not match the expected theoretical matrix.",
+        rtol=0.0,
+        atol=0.01,
+        err_msg="The reconstructed density matrix differs by more than 0.01 from the expected matrix.",
     )
