@@ -11,25 +11,20 @@ from classical_shadow_n_clifford import ClassicalShadow_N_CLIFFORD
 from shadow_protocol import ShadowProtocol
 
 
-class ClassicalShadow(ClassicalShadow_N_CLIFFORD):
-
-    def get_random_rotations(self, num_qubits) -> list[Clifford]:
-        # Create an Identity Clifford (Circuit with no gates)
-        qc_i = QuantumCircuit(num_qubits)
-        c_i = Clifford(qc_i)
-        return [c_i]
-
-
 class Protocol(ShadowProtocol):
 
     def get_num_qubits(self) -> int:
         return 2
 
     def get_state_circuit(self) -> QuantumCircuit:
-        return QuantumCircuit(2)
+        circuit = QuantumCircuit(2)
+        circuit.h(0)
+        circuit.cx(0, 1)
+        return circuit
 
     def run_circuit_and_get_measurement(self, circuit) -> list[int]:
         sim = AerSimulator()
+
         job = sim.run(circuit, shots=997)
         result = job.result()
         counts = result.get_counts()
@@ -41,13 +36,18 @@ class Protocol(ShadowProtocol):
 
 def test_reconstruction_with_identity():
     protocol = Protocol()
-    shadow = ClassicalShadow(protocol)
+    shadow = ClassicalShadow_N_CLIFFORD(protocol)
 
     expected_matrix = np.array(
-        [[4, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, -1]]
+        [
+            [0.5, 0.0, 0.0, 0.5],
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0],
+            [0.5, 0.0, 0.0, 0.5],
+        ]
     )
 
-    for _ in range(5):
+    for _ in range(5000):
         shadow.add_snapshot()
 
     reconstructed_dm = shadow.get_density_matrix_from_stabilizers()
