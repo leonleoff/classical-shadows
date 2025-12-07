@@ -2,75 +2,60 @@ import matplotlib.pyplot as plt
 import numpy as np
 from IPython.display import clear_output, display
 
-# --- Helper Classes for different View Types ---
+# --- Watcher Classes (Jetzt Daten-Container + Zeichenlogik) ---
 
 
 class MatrixWatcher:
     """
-    Displays a Heatmap (Density Matrix).
+    Zeigt eine Heatmap (Dichtematrix) an.
+    Nimmt die Matrix direkt im Konstruktor entgegen.
     """
 
-    def __init__(self, title_template="Matrix", vmin=-0.5, vmax=0.5, cmap="RdBu"):
-        self.title_template = title_template
+    def __init__(self, matrix, title="Matrix", vmin=-0.5, vmax=0.5, cmap="RdBu"):
+        self.matrix = matrix
+        self.title = title
         self.vmin = vmin
         self.vmax = vmax
         self.cmap = cmap
-        self.im = None
-        self.ax = None
 
-    def setup(self, ax):
-        self.ax = ax
-        # Initialize with empty data
-        self.im = ax.imshow(
-            np.zeros((2, 2)),  # Placeholder size, adjusts automatically
+    def plot(self, ax):
+        # Matrix zeichnen
+        data = np.real(self.matrix)
+        im = ax.imshow(
+            data,
             cmap=self.cmap,
             vmin=self.vmin,
             vmax=self.vmax,
             origin="upper",
         )
-        plt.colorbar(self.im, ax=ax)
-        ax.set_title(self.title_template)
+        ax.set_title(self.title)
 
-    def update(self, data, iteration):
-        # Update the image data
-        matrix_data = np.real(data)
-        self.im.set_data(matrix_data)
-
-        # Adjust extent if matrix size changes (optional, but good for stability)
-        if self.im.get_array().shape != matrix_data.shape:
-            self.im.set_extent(
-                (-0.5, matrix_data.shape[1] - 0.5, matrix_data.shape[0] - 0.5, -0.5)
-            )
-
-        # Format Title: If "{}" is in the string, insert the iteration number (shadow size)
-        if "{}" in self.title_template:
-            self.ax.set_title(self.title_template.format(iteration))
-        else:
-            self.ax.set_title(self.title_template)
+        # Colorbar hinzufügen (optional: prüfen ob schon eine da ist, hier einfach neu)
+        plt.colorbar(im, ax=ax)
 
 
 class GraphWatcher:
     """
-    Displays a Line Plot (Number Approximation).
+    Zeigt einen Linien-Graphen an.
+    WICHTIG: Erwartet eine LISTE von Daten (History), um eine Linie zu zeichnen.
     """
 
-    def __init__(self, title="Convergence", target_value=None, y_min=None, y_max=None):
+    def __init__(
+        self, data_list, title="Convergence", target_value=None, y_min=None, y_max=None
+    ):
+        self.data_list = data_list
         self.title = title
         self.target_value = target_value
         self.y_min = y_min
         self.y_max = y_max
-        self.line = None
-        self.ax = None
 
-    def setup(self, ax):
-        self.ax = ax
+    def plot(self, ax):
         ax.set_title(self.title)
 
-        # Set fixed Y-Axis if provided
-        if self.y_min is not None and self.y_max is not None:
-            ax.set_ylim(self.y_min, self.y_max)
+        # X-Achse definieren
+        x_data = range(len(self.data_list))
 
-        # Draw the static target line (Red)
+        # Target Line (Rot)
         if self.target_value is not None:
             ax.axhline(
                 self.target_value,
@@ -80,100 +65,53 @@ class GraphWatcher:
                 label="Target",
             )
 
-        # Initialize the live plot line (Green)
-        (self.line,) = ax.plot([], [], color="green", linewidth=1.5, label="Approx")
+        # Live Plot (Grün)
+        ax.plot(x_data, self.data_list, color="green", linewidth=1.5, label="Actual")
+
+        # Legende & Limits
         ax.legend(loc="upper right")
 
-    def update(self, data_list, iteration):
-        # data_list expects a list of numbers
-        x_data = range(len(data_list))
+        if self.y_min is not None and self.y_max is not None:
+            ax.set_ylim(self.y_min, self.y_max)
 
-        self.line.set_data(x_data, data_list)
-
-        # Adjust X-Axis to fit data
-        self.ax.set_xlim(0, max(10, len(data_list)))
-
-        # If no fixed Y-limits were set, adjust automatically
-        if self.y_min is None:
-            self.ax.relim()
-            self.ax.autoscale_view()
+        # X-Achse dynamisch skalieren
+        ax.set_xlim(0, max(10, len(self.data_list)))
 
 
 # --- Main Visualizer Class ---
 
 
 class LiveVisualizer:
-    def __init__(self, *watchers):
+    def __init__(self):
+        # Im Konstruktor machen wir nichts mehr, da das Layout dynamisch ist
+        pass
+
+    def update(self, *watchers):
         """
-        Accepts any number of Watcher objects (MatrixWatcher or GraphWatcher).
-        Example: LiveVisualizer(matrix_w, target_w, graph_w)
+        Erstellt basierend auf den übergebenen Watchern jedes Mal
+        ein neues Layout und zeichnet es.
         """
-        self.watchers = watchers
         n = len(watchers)
-
-        # Dynamic Layout: 1 row, n columns
-        self.fig, self.axes = plt.subplots(1, n, figsize=(6 * n, 5))
-
-        # If there is only 1 watcher, axes is not a list, so we wrap it
-        if n == 1:
-            self.axes = [self.axes]
-
-        # Setup each watcher with its specific axis
-        for ax, watcher in zip(self.axes, self.watchers):
-            watcher.setup(ax)
-
-        plt.tight_layout()
-        plt.close()  # Prevent double plotting in notebooks
-
-    def update(self, iteration, *data_args):
-        """
-        iteration: The current shadow size (int).
-        *data_args: The data for each watcher in the order they were initialized.
-        """
-        if len(data_args) != len(self.watchers):
-            print(
-                f"Error: Expected {len(self.watchers)} data inputs, got {len(data_args)}"
-            )
+        if n == 0:
             return
 
-        # Update every watcher
-        for watcher, data in zip(self.watchers, data_args):
-            watcher.update(data, iteration)
+        # 1. Figure erstellen (Dynamische Größe basierend auf Anzahl der Watcher)
+        # Wir schließen die alte Figure nicht explizit, da clear_output das visuell regelt,
+        # aber plt.close() verhindert Memory Leaks im Hintergrund.
+        plt.close("all")
 
-        # Refresh Display
+        fig, axes = plt.subplots(1, n, figsize=(6 * n, 5))
+
+        # Wenn nur 1 Plot, ist axes kein Array -> wir machen es zu einer Liste
+        if n == 1:
+            axes = [axes]
+
+        # 2. Durch alle Watcher iterieren und sie bitten, sich auf ihre Achse zu malen
+        for ax, watcher in zip(axes, watchers):
+            watcher.plot(ax)
+
+        plt.tight_layout()
+
+        # 3. Output clearen und neue Figure anzeigen
         clear_output(wait=True)
-        display(self.fig)
-
-
-# --- Legacy / Utility Functions ---
-
-
-def plot_final_comparison(actual_matrix, target_matrix):
-    """
-    Static plot for final results (unchanged from original request).
-    """
-    actual = np.real(actual_matrix)
-    target = np.real(target_matrix)
-    difference = actual - target
-
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 5))
-
-    vmin, vmax = -0.5, 0.5
-
-    # 1. Actual
-    im1 = ax1.imshow(actual, cmap="RdBu", vmin=vmin, vmax=vmax, origin="upper")
-    ax1.set_title("Reconstructed State")
-    plt.colorbar(im1, ax=ax1)
-
-    # 2. Target
-    im2 = ax2.imshow(target, cmap="RdBu", vmin=vmin, vmax=vmax, origin="upper")
-    ax2.set_title("Target State (Ideal)")
-    plt.colorbar(im2, ax=ax2)
-
-    # 3. Difference
-    im3 = ax3.imshow(difference, cmap="RdBu", vmin=vmin, vmax=vmax, origin="upper")
-    ax3.set_title("Difference (Error)")
-    plt.colorbar(im3, ax=ax3)
-
-    plt.tight_layout()
-    plt.show()
+        display(fig)
