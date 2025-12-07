@@ -72,7 +72,7 @@ class GraphWatcher:
         # Actual Data (Grün)
         ax.plot(xs, ys, color="green", linewidth=1.5, label="Actual")
 
-        ax.legend(loc="lower right")
+        ax.legend(loc="lower left")
 
         # Y-Achsen Limits
         if self.y_min is not None and self.y_max is not None:
