@@ -16,7 +16,7 @@ class AbstractClassicalShadow(ABC):
         self.num_qubits: int = shadow_protocol.get_num_qubits()
         self.shadow_protocol: ShadowProtocol = shadow_protocol
 
-        self.stabilizer_list_list: list[list[StabilizerState]] = []
+        self.clifford_list_list: list[list[StabilizerState]] = []
 
     @staticmethod
     def stabilizer_to_density_matrix(stab: StabilizerState) -> DensityMatrix:
@@ -52,15 +52,13 @@ class AbstractClassicalShadow(ABC):
         assert len(measurement_results) == self.num_qubits
 
         # roatet back and store snapshot
-        stabilizers: list[StabilizerState] = (
-            self.compute_clifford_applied_to_measurements(
-                cliffords, measurement_results
-            )
+        stabilizers: list[Clifford] = self.compute_clifford_applied_to_measurements(
+            cliffords, measurement_results
         )
-        self.stabilizer_list_list.append(stabilizers)
+        self.clifford_list_list.append(stabilizers)
 
     def get_shadow_size(self) -> int:
-        return len(self.stabilizer_list_list)
+        return len(self.clifford_list_list)
 
     def predict_observable(self):
         raise NotImplementedError("This function is not yet implemented.")
@@ -80,7 +78,7 @@ class AbstractClassicalShadow(ABC):
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
-    def get_density_matrix_from_stabilizers(self):
+    def get_density_matrix_from_cliffords(self):
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod

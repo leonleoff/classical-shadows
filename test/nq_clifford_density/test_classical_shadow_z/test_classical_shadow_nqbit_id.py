@@ -52,7 +52,7 @@ def test_reconstruction_with_identity():
     for _ in range(5):
         shadow.add_snapshot()
 
-    reconstructed_dm = shadow.get_density_matrix_from_stabilizers()
+    reconstructed_dm = shadow.get_density_matrix_from_cliffords()
 
     if hasattr(reconstructed_dm, "data"):
         reconstructed_dm = reconstructed_dm.data

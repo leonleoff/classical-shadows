@@ -21,50 +21,49 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
 
     def compute_clifford_applied_to_measurements(
         self, cliffords: list[Clifford], measurement_results: list[int]
-    ) -> list[StabilizerState]:
+    ) -> list[Clifford]:
 
         assert len(cliffords) == len(measurement_results)
 
-        stabilizer_states: list[StabilizerState] = []
+        resulting_cliffords: list[Clifford] = []
 
-        qc_0 = QuantumCircuit(1)
-        state_0 = StabilizerState(qc_0)
+        cliff_0 = Clifford(QuantumCircuit(1))
 
         qc_1 = QuantumCircuit(1)
         qc_1.x(0)
-        state_1 = StabilizerState(qc_1)
+        cliff_1 = Clifford(qc_1)
 
         for i, (cliff, bit) in enumerate(zip(cliffords, measurement_results)):
             bit_val = int(bit)
 
             if bit_val == 1:
-                base_state = state_1
+                base_cliff = cliff_1
             elif bit_val == 0:
-                base_state = state_0
+                base_cliff = cliff_0
             else:
                 error_msg = f"Invalid measurement result: {bit_val}. Expected 0 or 1."
                 raise ValueError(error_msg)
 
-            state = base_state.copy()
+            combined_cliff = base_cliff.compose(cliff.adjoint())
 
-            pre_measurement_state: StabilizerState = state.evolve(cliff.adjoint())
-            stabilizer_states.append(pre_measurement_state)
+            resulting_cliffords.append(combined_cliff)
 
-        return stabilizer_states
+        return resulting_cliffords
 
     def get_random_rotations(self, num_qubits) -> list[Clifford]:
         # S. Bravyi and D. Maslov, Hadamard-free circuits expose the structure of the Clifford group. https://arxiv.org/abs/2003.09412
         return [random_clifford(1) for _ in range(num_qubits)]
 
-    def get_density_matrix_from_stabilizers(self, log: bool = False):
-        if not self.stabilizer_list_list:
+    def get_density_matrix_from_cliffords(self, log: bool = False):
+        if not self.clifford_list_list:
             raise ValueError("No stablizers prestent.")
         sum_rho = None
 
-        for i, row in enumerate(self.stabilizer_list_list):
+        for i, row in enumerate(self.clifford_list_list):
             inverted_qubits = []
 
-            for j, stab in enumerate(row):
+            for j, cliff in enumerate(row):
+                stab = StabilizerState(cliff)
                 dm_data: DensityMatrix = self.stabilizer_to_density_matrix(stab)
 
                 inverted_dm = 3 * dm_data - np.eye(2)
@@ -78,7 +77,7 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
             else:
                 sum_rho += full_snapshot
 
-        return sum_rho / len(self.stabilizer_list_list)
+        return sum_rho / len(self.clifford_list_list)
 
     def make_rotated_state_circuit(
         self, cliffords: list[Clifford], state_creation_circuit: QuantumCircuit
