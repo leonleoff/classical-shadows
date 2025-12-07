@@ -2,25 +2,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 from IPython.display import clear_output, display
 
-# --- Watcher Classes (Jetzt Daten-Container + Zeichenlogik) ---
-
 
 class MatrixWatcher:
     """
-    Zeigt eine Heatmap (Dichtematrix) an.
-    Nimmt die Matrix direkt im Konstruktor entgegen.
+    Zeigt eine Dichtematrix als Heatmap an.
     """
 
-    def __init__(self, matrix, title="Matrix", vmin=-0.5, vmax=0.5, cmap="RdBu"):
+    def __init__(
+        self, matrix, title_template="Matrix", vmin=-0.5, vmax=0.5, cmap="RdBu"
+    ):
         self.matrix = matrix
-        self.title = title
+        self.title = title_template  # Name angepasst an deinen Aufruf
         self.vmin = vmin
         self.vmax = vmax
         self.cmap = cmap
 
     def plot(self, ax):
-        # Matrix zeichnen
+        # Falls komplexe Zahlen kommen, nehmen wir den Realteil
         data = np.real(self.matrix)
+
         im = ax.imshow(
             data,
             cmap=self.cmap,
@@ -29,21 +29,20 @@ class MatrixWatcher:
             origin="upper",
         )
         ax.set_title(self.title)
-
-        # Colorbar hinzufügen (optional: prüfen ob schon eine da ist, hier einfach neu)
         plt.colorbar(im, ax=ax)
 
 
 class GraphWatcher:
     """
-    Zeigt einen Linien-Graphen an.
-    WICHTIG: Erwartet eine LISTE von Daten (History), um eine Linie zu zeichnen.
+    Zeigt einen Graphen basierend auf einer History von (x, y) Tupeln an.
     """
 
     def __init__(
-        self, data_list, title="Convergence", target_value=None, y_min=None, y_max=None
+        self, history, title="Convergence", target_value=None, y_min=None, y_max=None
     ):
-        self.data_list = data_list
+        self.history = (
+            history  # Erwartet eine Liste von Tupeln: [(x1, y1), (x2, y2), ...]
+        )
         self.title = title
         self.target_value = target_value
         self.y_min = y_min
@@ -52,10 +51,15 @@ class GraphWatcher:
     def plot(self, ax):
         ax.set_title(self.title)
 
-        # X-Achse definieren
-        x_data = range(len(self.data_list))
+        # Wenn die History leer ist, nichts zeichnen
+        if not self.history:
+            return
 
-        # Target Line (Rot)
+        # Daten entpacken: [(100, 0.8), (200, 0.9)] -> x=[100, 200], y=[0.8, 0.9]
+        # zip(*list) transponiert die Liste von Tupeln
+        xs, ys = zip(*self.history)
+
+        # Target Line (Rot, gestrichelt)
         if self.target_value is not None:
             ax.axhline(
                 self.target_value,
@@ -65,53 +69,52 @@ class GraphWatcher:
                 label="Target",
             )
 
-        # Live Plot (Grün)
-        ax.plot(x_data, self.data_list, color="green", linewidth=1.5, label="Actual")
+        # Actual Data (Grün)
+        ax.plot(xs, ys, color="green", linewidth=1.5, label="Actual")
 
-        # Legende & Limits
-        ax.legend(loc="upper right")
+        ax.legend(loc="lower right")
 
+        # Y-Achsen Limits
         if self.y_min is not None and self.y_max is not None:
             ax.set_ylim(self.y_min, self.y_max)
 
-        # X-Achse dynamisch skalieren
-        ax.set_xlim(0, max(10, len(self.data_list)))
-
-
-# --- Main Visualizer Class ---
+        # Optional: Grid hinzufügen für bessere Lesbarkeit
+        ax.grid(True, linestyle=":", alpha=0.6)
 
 
 class LiveVisualizer:
+    """
+    Der Haupt-Container, der die Subplots erstellt und verwaltet.
+    """
+
     def __init__(self):
-        # Im Konstruktor machen wir nichts mehr, da das Layout dynamisch ist
+        # Leer, da das Layout bei jedem update() neu berechnet wird
         pass
 
     def update(self, *watchers):
         """
-        Erstellt basierend auf den übergebenen Watchern jedes Mal
-        ein neues Layout und zeichnet es.
+        Nimmt beliebig viele Watcher entgegen und zeichnet sie nebeneinander.
         """
         n = len(watchers)
         if n == 0:
             return
 
-        # 1. Figure erstellen (Dynamische Größe basierend auf Anzahl der Watcher)
-        # Wir schließen die alte Figure nicht explizit, da clear_output das visuell regelt,
-        # aber plt.close() verhindert Memory Leaks im Hintergrund.
+        # Alte Plots schließen, um Speicherlecks zu verhindern
         plt.close("all")
 
+        # Figure erstellen
         fig, axes = plt.subplots(1, n, figsize=(6 * n, 5))
 
-        # Wenn nur 1 Plot, ist axes kein Array -> wir machen es zu einer Liste
+        # Sicherstellen, dass axes immer iterierbar ist (auch bei n=1)
         if n == 1:
             axes = [axes]
 
-        # 2. Durch alle Watcher iterieren und sie bitten, sich auf ihre Achse zu malen
+        # Jeden Watcher zeichnen lassen
         for ax, watcher in zip(axes, watchers):
             watcher.plot(ax)
 
         plt.tight_layout()
 
-        # 3. Output clearen und neue Figure anzeigen
+        # Alte Ausgabe löschen und neue anzeigen
         clear_output(wait=True)
         display(fig)
