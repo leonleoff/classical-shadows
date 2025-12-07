@@ -1,4 +1,5 @@
 import random
+import statistics
 
 import numpy as np
 from qiskit import QuantumCircuit
@@ -112,8 +113,23 @@ class ClassicalShadow_N_CLIFFORD(AbstractClassicalShadow):
         if not overlaps:
             raise ValueError("Shadow list is empty.")
 
-        mean_overlap = sum(overlaps) / len(overlaps)
+        num_batches = 3
 
-        fidelity = (2**n_qubits + 1) * mean_overlap - 1
+        if len(overlaps) < num_batches:
+            representative_overlap = sum(overlaps) / len(overlaps)
+        else:
+            random.shuffle(overlaps)
+            batch_size = len(overlaps) // num_batches
+            batch_means = []
+
+            for i in range(num_batches):
+
+                batch = overlaps[i * batch_size : (i + 1) * batch_size]
+                batch_mean = sum(batch) / len(batch)
+                batch_means.append(batch_mean)
+
+            representative_overlap = statistics.median(batch_means)
+
+        fidelity = (2**n_qubits + 1) * representative_overlap - 1
 
         return fidelity

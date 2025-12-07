@@ -1,35 +1,56 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython.display import clear_output, display
+from matplotlib.colors import hsv_to_rgb
 
 
 class MatrixWatcher:
     """
-    Zeigt eine Dichtematrix als Heatmap an.
+    Zeigt eine komplexe Dichtematrix an:
+    - Farbe (Hue) = Phase (Winkel der komplexen Zahl)
+    - Sättigung (Saturation) = Betrag (Absolutwert)
     """
 
-    def __init__(
-        self, matrix, title_template="Matrix", vmin=-0.5, vmax=0.5, cmap="RdBu"
-    ):
+    def __init__(self, matrix, title_template="Matrix", vmax=0.5):
         self.matrix = matrix
-        self.title = title_template  # Name angepasst an deinen Aufruf
-        self.vmin = vmin
+        self.title = title_template
+        # vmax bestimmt, ab welchem Betrag die Farbe "voll gesättigt" ist.
+        # Bei Dichtematrizen ist 0.5 oder 1.0 oft sinnvoll.
         self.vmax = vmax
-        self.cmap = cmap
 
     def plot(self, ax):
-        # Falls komplexe Zahlen kommen, nehmen wir den Realteil
-        data = np.real(self.matrix)
+        # 1. Betrag (Magnitude) und Phase (Winkel) berechnen
+        # Wir nehmen direkt die komplexe Matrix, kein np.real() mehr!
+        magnitude = np.abs(self.matrix)
+        phase = np.angle(self.matrix)
 
-        im = ax.imshow(
-            data,
-            cmap=self.cmap,
-            vmin=self.vmin,
-            vmax=self.vmax,
+        # 2. Sättigung berechnen (Magnitude normalisieren)
+        # 0 -> Weiß (Sättigung 0), vmax -> Volle Farbe (Sättigung 1)
+        # np.clip sorgt dafür, dass Werte > vmax nicht crashen, sondern einfach max bunt bleiben
+        saturation = np.clip(magnitude / self.vmax, 0, 1)
+
+        # 3. Farbe (Hue) berechnen (Phase normalisieren)
+        # np.angle gibt Werte von -pi bis pi. Wir mappen das auf 0 bis 1 für die Farbskala.
+        # Rot ist meistens bei 0 (Realteil positiv).
+        hue = (phase + np.pi) / (2 * np.pi)
+
+        # 4. Helligkeit (Value)
+        # Wir setzen das konstant auf 1 (volle Helligkeit), damit Sättigung 0 = Weiß ist.
+        value = np.ones_like(hue)
+
+        # 5. HSV Bild zusammenbauen (Dimensionen: Zeilen, Spalten, 3 Kanäle)
+        hsv_image = np.dstack((hue, saturation, value))
+
+        # 6. In RGB konvertieren für matplotlib
+        rgb_image = hsv_to_rgb(hsv_image)
+
+        # 7. Anzeigen
+        ax.imshow(
+            rgb_image,
             origin="upper",
+            interpolation="nearest",  # 'nearest' ist wichtig, damit Pixel scharf bleiben
         )
         ax.set_title(self.title)
-        plt.colorbar(im, ax=ax)
 
 
 class GraphWatcher:
