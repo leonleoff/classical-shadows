@@ -82,5 +82,5 @@ class AbstractClassicalShadow(ABC):
         raise NotImplementedError("This method should be implemented by subclasses")
 
     @abstractmethod
-    def calculate_fidelity(self):
+    def calculate_fidelity(self, clifford_a: Clifford):
         raise NotImplementedError("This method should be implemented by subclasses")

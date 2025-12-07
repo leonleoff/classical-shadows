@@ -80,5 +80,40 @@ class ClassicalShadow_N_CLIFFORD(AbstractClassicalShadow):
 
         return combined_circuit
 
-    def calculate_fidelity(self):
-        raise NotImplementedError("This method should be implemented by subclasses")
+    def calculate_fidelity(self, clifford_a: Clifford):
+        n_qubits = self.num_qubits
+
+        # change qbit order of input clifford
+        qc_reverse = QuantumCircuit(n_qubits)
+        for i in range(n_qubits // 2):
+            qc_reverse.swap(i, n_qubits - 1 - i)
+        clifford_reverse = Clifford(qc_reverse)
+
+        clifford_a = clifford_a.compose(clifford_reverse)
+
+        clifford_list_list = self.clifford_list_list
+        overlaps: list[float] = []
+
+        cliff_a_inv = clifford_a.adjoint()
+
+        for cliff_list in clifford_list_list:
+            assert len(cliff_list) == 1
+            cliff_b: Clifford = cliff_list[0]
+
+            # |<a|b>|^2
+            combined_cliff = cliff_b.compose(cliff_a_inv)
+            zero_state = StabilizerState(combined_cliff)
+
+            probs = zero_state.probabilities_dict()
+            overlap = probs.get("0" * n_qubits, 0.0)
+
+            overlaps.append(overlap)
+
+        if not overlaps:
+            raise ValueError("Shadow list is empty.")
+
+        mean_overlap = sum(overlaps) / len(overlaps)
+
+        fidelity = (2**n_qubits + 1) * mean_overlap - 1
+
+        return fidelity

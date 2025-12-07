@@ -97,5 +97,5 @@ class ClassicalShadow_1_CLIFFORD(AbstractClassicalShadow):
         combined_circuit.measure_all()
         return combined_circuit
 
-    def calculate_fidelity(self):
+    def calculate_fidelity(self, clifford_a: Clifford):
         raise NotImplementedError("This method should be implemented by subclasses")
